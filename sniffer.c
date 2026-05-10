@@ -21,6 +21,30 @@ unsigned int hash(flow_key_t *key) {
     return h % TABLE_SIZE;
 }
 
+void normalize_flow(flow_key_t *key) {
+
+    // Compare IPs first
+    if (ntohl(key->src_ip) > ntohl(key->dst_ip)) {
+
+        uint32_t temp_ip = key->src_ip;
+        key->src_ip = key->dst_ip;
+        key->dst_ip = temp_ip;
+
+        uint16_t temp_port = key->src_port;
+        key->src_port = key->dst_port;
+        key->dst_port = temp_port;
+    }
+
+    // If IPs equal, compare ports
+    else if (key->src_ip == key->dst_ip &&
+             ntohs(key->src_port) > ntohs(key->dst_port)) {
+
+        uint16_t temp_port = key->src_port;
+        key->src_port = key->dst_port;
+        key->dst_port = temp_port;
+    }
+}
+
 void update_flow(flow_key_t *key, ssize_t size) {
     unsigned int index = hash(key);
 
@@ -149,6 +173,8 @@ int main() {
 
             process_tcp_packet(tcp, &key, data_size);
 
+            normalize_flow(&key);
+
             update_flow(&key, data_size);
         }
         else if (ip->protocol == IPPROTO_UDP) {
@@ -160,6 +186,8 @@ int main() {
             struct udphdr *udp = (struct udphdr *)(buffer + sizeof(struct ethhdr) + ip_header_len);
 
             process_udp_packet(udp, &key, data_size);
+
+            normalize_flow(&key);
 
             update_flow(&key, data_size);
         }

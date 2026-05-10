@@ -40,5 +40,6 @@ flow_entry_t* flow_table[TABLE_SIZE] = {0};
 void process_tcp_packet(struct tcphdr *tcp, flow_key_t *key, ssize_t data_size);
 void process_udp_packet(struct udphdr *udp, flow_key_t *key, ssize_t data_size);
 void print_flows();
-void update_flow(flow_key_t *key, ssize_t size);
 unsigned int hash(flow_key_t *key);
+void normalize_flow(flow_key_t *key);
+void update_flow(flow_key_t *key, ssize_t size);
